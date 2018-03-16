@@ -49,6 +49,7 @@ def leerFichero():
                     raise Exception("Error en el fichero")
                 j+=1
             i+=1
+        return tablero
 
 def generarTablero(tamano,minas):
     tablero=list()
@@ -58,8 +59,8 @@ def generarTablero(tamano,minas):
             tablero[i].append(Cell(i,j))
     for _ in range(minas):
         while True:
-            i=randint(0,tamano[0])
-            j=randint(0,tamano[1])
+            i=randint(0,tamano[0]-1)
+            j=randint(0,tamano[1]-1)
             if not tablero[i][j].has_mine:
                 tablero[i][j].has_mine=True
                 break
@@ -67,6 +68,37 @@ def generarTablero(tamano,minas):
     
 
 def jugar(tablero):
+    explosion=False
+    while True:
+        mostarTablero(tablero)
+        jugada=raw_input("Introduzca su jugada: _")
+        while len(jugada)!=0:
+            if len(jugada)<3:
+                print("ENTRADA ERRONEA")
+                break
+            try:
+                pos=(ROWS_NAME.index(jugada.pop(0)),COLS_NAME.index(jugada.pop(0)))
+            except ValueError:
+                print("ENTRADA ERRONEA")
+                break
+            accion=jugada.pop(0)
+            if accion=='!':
+                #TODO marcar
+                pass
+            elif accion=='*':
+                #TODO abrir
+                pass
+            else:
+                print("ENTRADA ERRONEA")
+                break
+            if explosion:
+                print("pum")
+                break
+            if comprobarTablero(tablero):
+                print("win")
+                break
+    
+def comprobarTablero(tablero):
     pass
 
 def mostarTablero(tablero):
@@ -84,7 +116,7 @@ def mostarTablero(tablero):
         print(ROWS_NAME[i],end='')
         if i%2==0:
             print(" ",end='')
-        for _ in range(5):
+        for _ in range(len(tablero[i])):
             print(CNS+" ",end='') #TODO Sustituir por el numero de minas
         print(CNS)
         if i<len(tablero)-1:
