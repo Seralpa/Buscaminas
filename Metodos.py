@@ -18,7 +18,8 @@ CONS = u'\u2524' # ┤
 CONE = u'\u2534' # ┴
 CSOM = u'\u2593' # ▒ 
 
-def menuInicial(): #Este metodo imprime en pantalla un "menu de inicio" y devuelve la variable eleccion que luego el modulo principal usara para dirigir el flujo del prograna. 
+def menuInicial(): 
+    #Este metodo imprime en pantalla un "menu de inicio" y devuelve la variable eleccion que luego el modulo principal usara para dirigir el flujo del prograna. 
     print(" BUSCAMINAS")
     print("------------") 
     print(" 1. Principiante (9x9, 10 minas)") 
@@ -69,7 +70,7 @@ def generarTablero(tamano,minas):
 
 def jugar(tablero):
     explosion=False
-    while True:
+    while not explosion and not comprobarTablero(tablero):
         mostarTablero(tablero)
         jugada=raw_input("Introduzca su jugada: _")
         while len(jugada)!=0:
@@ -99,6 +100,7 @@ def jugar(tablero):
                 break
     
 def comprobarTablero(tablero):
+    #TODO
     pass
 
 def mostarTablero(tablero):
@@ -116,8 +118,18 @@ def mostarTablero(tablero):
         print(ROWS_NAME[i],end='')
         if i%2==0:
             print(" ",end='')
-        for _ in range(len(tablero[i])):
-            print(CNS+" ",end='') #TODO Sustituir por el numero de minas
+        for c in tablero[i]:
+            print(CNS,end='')
+            if c.is_checked:
+                print("X",end='')
+            elif not c.is_open:
+                print(CSOM,end='')
+            elif c.num_minas<0:
+                print("?",end='')
+            elif c.num_minas==0:
+                print(" ",end='')
+            else:
+                print(c.num_minas,end='')
         print(CNS)
         if i<len(tablero)-1:
             if i%2==0:
@@ -146,21 +158,79 @@ class Cell:
         self.y=y
 
     def set_num_minas(self,tablero):
-        self.num_minas=1
-        pass
+        self.num_minas=0
+        if self.y!=0:
+                if tablero[self.y-1][self.x].has_mine and not tablero[self.y-1][self.x].is_checked:
+                    self.num_minas+=1
+        
+        if self.x!=0:
+            if tablero[self.y][self.x-1].has_mine and not tablero[self.y][self.x-1].is_checked:
+                self.num_minas+=1
+
+        if self.x!=len(tablero)-1:
+            if tablero[self.y][self.x+1].has_mine and not tablero[self.y][self.x+1].is_checked:
+                self.num_minas+=1
+
+        if self.y!=len(tablero)-1:
+                if tablero[self.y+1][self.x].has_mine and not tablero[self.y+1][self.x].is_checked:
+                    self.num_minas+=1
+
+        if self.y%2==0:
+            if self.x!=len(tablero)-1 and self.y!=0:
+                if tablero[self.y-1][self.x+1].has_mine and not tablero[self.y-1][self.x+1].is_checked:
+                    self.num_minas+=1
+            
+            if self.y!=len(tablero)-1 and self.x!=len(tablero)-1:
+                if tablero[self.y+1][self.x+1].has_mine and not tablero[self.y+1][self.x+1].is_checked:
+                    self.num_minas+=1
+        else:
+            if self.x!=0 and self.y!=0:
+                if tablero[self.y-1][self.x-1].has_mine and not tablero[self.y-1][self.x-1].is_checked:
+                    self.num_minas+=1
+
+            if self.y!=len(tablero)-1 and self.x!=0:
+                if tablero[self.y+1][self.x-1].has_mine and not tablero[self.y+1][self.x-1].is_checked:
+                    self.num_minas+=1
     
     def open_cell(self,tablero):
-        if self.is_open or self.is_checked:
-            raise Exception("Operacion invalida")
+        if self.is_checked:
+            return 0
 
         if self.has_mine:
-            #TODO explode()
-            pass
+            return -1
+
         else:
             self.is_open=True
             self.set_num_minas(tablero)
-            if self.num_minas<=0:
-                #TODO abrir las celdas cercanas
-                pass
-    def __str__(self):
-        return str(self.x)+' '+str(self.y)
+            if self.num_minas<=0:   #abrir recursivamente
+                if self.y!=0:
+                    if tablero[self.y-1][self.x].open_cell==-1:
+                        return -1
+        
+                if self.x!=0:
+                    if tablero[self.y][self.x-1].open_cell==-1:
+                        return -1
+
+                if self.x!=len(tablero)-1:
+                    if tablero[self.y][self.x+1].open_cell==-1:
+                        return -1
+
+                if self.y!=len(tablero)-1:
+                        if tablero[self.y+1][self.x].open_cell==-1:
+                            return -1
+                if self.y%2==0:
+                    if self.x!=len(tablero)-1 and self.y!=0:
+                        if tablero[self.y-1][self.x+1].open_cell==-1:
+                            return -1
+
+                    if self.y!=len(tablero)-1 and self.x!=len(tablero)-1:
+                        if tablero[self.y+1][self.x+1].open_cell==-1:
+                            return -1
+                else:
+                    if self.x!=0 and self.y!=0:
+                        if tablero[self.y-1][self.x-1].open_cell==-1:
+                            return -1
+
+                    if self.y!=len(tablero)-1 and self.x!=0:
+                        if tablero[self.y+1][self.x-1].open_cell==-1:
+                            return -1
