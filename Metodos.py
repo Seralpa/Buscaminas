@@ -69,8 +69,8 @@ def generarTablero(tamano,minas):
     
 
 def jugar(tablero):
-    explosion=False
-    while not explosion and not comprobarTablero(tablero):
+    explosion,win=False,False
+    while not explosion and not win:
         mostarTablero(tablero)
         jugada=raw_input("Introduzca su jugada: _")
         while len(jugada)!=0:
@@ -83,25 +83,37 @@ def jugar(tablero):
                 print("ENTRADA ERRONEA")
                 break
             accion=jugada.pop(0)
+            if pos[0]>=len(tablero) or pos[1]>=len(tablero[0]) or (accion!='!' and accion!='*'):
+                print("ENTRADA ERRONEA")
+                break
             if accion=='!':
                 #TODO marcar
                 pass
             elif accion=='*':
-                #TODO abrir
-                pass
-            else:
-                print("ENTRADA ERRONEA")
-                break
+                if tablero[pos[0]][pos[1]].is_checked:
+                    print("NO SE PUEDE ABRIR UNA CELDA MARCADA")
+                    break
+                else:
+                    if tablero[pos[0]][pos[1]].is_open and tablero[pos[0]][pos[1]].num_minas>0:
+                        print("CELDA YA ABIERTA. NO SE PUEDEN ABRIR LAS CELDAS VECINAS POR NUMERO INSUFICIENTE DE MARCAS")
+                        break
+                    else:
+                        tablero[pos[0]][pos[1]].open_cell
             if explosion:
-                print("pum")
+                explosion=True
+                print("pum")#TODO mostrar mensaje de explosion
                 break
             if comprobarTablero(tablero):
-                print("win")
+                win=True
+                print("win")#TODO mostrar mensaje ede victoria
                 break
     
 def comprobarTablero(tablero):
-    #TODO
-    pass
+    for row in tablero:
+        for c in row:
+            if (not c.is_open and not c.has_mine) or (c.has_mine and not c.is_checked):
+                return False
+    return True
 
 def mostarTablero(tablero):
     #TODO print("MINAS RESTANTES: "+minas_restantes+" | MARCADAS: "+minas_marcadas+" | TIEMPO: "+tiempo)
