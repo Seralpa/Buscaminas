@@ -20,6 +20,6 @@ while True:
     elif(eleccion==4):
         tablero=leerFichero()
     else: 
-        break
+        exit()
     jugar(tablero)
 

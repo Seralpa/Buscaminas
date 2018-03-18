@@ -2,9 +2,10 @@
 
 from __future__ import print_function
 from random import randint
+import time
 
-COLS_NAME="abcdefghijklmnopqrstuvwxyz=+-:/"
-ROWS_NAME="ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%&"
+COLS_NAME="abcdefghijklmnopqrstuvwxyz=+-:"
+ROWS_NAME="ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%"
 # Caracteres para dibujar cuadros
 COE = u'\u2500' # ─
 CNS = u'\u2502' # │
@@ -38,14 +39,17 @@ def leerFichero():
     i,j=0,0
     fichero= raw_input("Introduzca el nombre del fichero: _")
     with open(fichero,'r') as f:
-        f.readline
+        linea=f.readline()
+        if int(linea[0])>30 or int(linea[2])>30:
+            raise Exception("Error en el fichero, tablero demasiado grande")
         for linea in f:
             tablero.append(list())
-            for c in linea:
+            j=0
+            for c in linea.strip('\n'):
                 if c=='.':
-                    tablero[i].append(Cell(i,j))
-                if c=='*':
-                    tablero[i].append(Cell(i,j,True))
+                    tablero[i].append(Cell(j,i))
+                elif c=='*':
+                    tablero[i].append(Cell(j,i,True))
                 else:
                     raise Exception("Error en el fichero")
                 j+=1
@@ -57,23 +61,26 @@ def generarTablero(tamano,minas):
     for i in range(tamano[0]):
         tablero.append(list())
         for j in range(tamano[1]):
-            tablero[i].append(Cell(i,j))
+            tablero[i].append(Cell(j,i))
     for _ in range(minas):
-        while True:
+        i=randint(0,tamano[0]-1)
+        j=randint(0,tamano[1]-1)
+        while tablero[i][j].has_mine:
             i=randint(0,tamano[0]-1)
             j=randint(0,tamano[1]-1)
-            if not tablero[i][j].has_mine:
-                tablero[i][j].has_mine=True
-                break
+        tablero[i][j].has_mine=True
     return tablero
     
-
 def jugar(tablero):
     explosion,win=False,False
+    total_minas=contarMinas(tablero)
+    minas_marcadas=0
+    start=time.time()
     while not explosion and not win:
-        mostarTablero(tablero)
-        jugada=raw_input("Introduzca su jugada: _")
+        mostrarTablero(tablero,total_minas,minas_marcadas,time.time()-start)
+        jugada=list(raw_input("Introduzca su jugada: _"))
         while len(jugada)!=0:
+            setAllNumMinas(tablero)
             if len(jugada)<3:
                 print("ENTRADA ERRONEA")
                 break
@@ -87,8 +94,17 @@ def jugar(tablero):
                 print("ENTRADA ERRONEA")
                 break
             if accion=='!':
-                #TODO marcar
-                pass
+                if tablero[pos[0]][pos[1]].is_open:
+                    print("NO SE PUEDE MARCAR UNA CELDA ABIERTA")
+                    break
+                if minas_marcadas==total_minas and not tablero[pos[0]][pos[1]].is_checked:
+                    print("NO SE PUEDEN MARCAR MAS CELDAS QUE MINAS")
+                    break
+                if tablero[pos[0]][pos[1]].is_checked:
+                    minas_marcadas-=1
+                else:
+                    minas_marcadas+=1
+                tablero[pos[0]][pos[1]].is_checked=not tablero[pos[0]][pos[1]].is_checked
             elif accion=='*':
                 if tablero[pos[0]][pos[1]].is_checked:
                     print("NO SE PUEDE ABRIR UNA CELDA MARCADA")
@@ -98,16 +114,39 @@ def jugar(tablero):
                         print("CELDA YA ABIERTA. NO SE PUEDEN ABRIR LAS CELDAS VECINAS POR NUMERO INSUFICIENTE DE MARCAS")
                         break
                     else:
-                        tablero[pos[0]][pos[1]].open_cell
+                        if tablero[pos[0]][pos[1]].open_cell(tablero)==-1:
+                            explosion=True
             if explosion:
-                explosion=True
-                print("pum")#TODO mostrar mensaje de explosion
                 break
             if comprobarTablero(tablero):
                 win=True
-                print("win")#TODO mostrar mensaje ede victoria
-                break
-    
+    openAll(tablero)
+    mostrarTablero(tablero,total_minas,minas_marcadas,time.time()-start)
+    if win:
+        #TODO Mostrar mensaje de victoria
+        pass
+    else:
+        #TODO Mostrar mensaje de explosion
+        pass
+
+def setAllNumMinas(tablero):
+    for row in tablero:
+        for c in row:
+            c.set_num_minas(tablero)
+
+def openAll(tablero):
+    for row in tablero:
+        for c in row:
+            c.is_open=True
+
+def contarMinas(tablero):
+    cont=0
+    for row in tablero:
+        for c in row:
+            if c.has_mine:
+                cont+=1
+    return cont
+
 def comprobarTablero(tablero):
     for row in tablero:
         for c in row:
@@ -115,8 +154,8 @@ def comprobarTablero(tablero):
                 return False
     return True
 
-def mostarTablero(tablero):
-    #TODO print("MINAS RESTANTES: "+minas_restantes+" | MARCADAS: "+minas_marcadas+" | TIEMPO: "+tiempo)
+def mostrarTablero(tablero,total_minas,minas_marcadas,tiempo):
+    print("MINAS RESTANTES: "+str(total_minas-minas_marcadas)+" | MARCADAS: "+str(minas_marcadas)+" | TIEMPO: "+str(tiempo))
     print("  ",end='')
     for i in range(len(tablero[0])):
         print(" "+COLS_NAME[i],end='')
@@ -132,10 +171,14 @@ def mostarTablero(tablero):
             print(" ",end='')
         for c in tablero[i]:
             print(CNS,end='')
-            if c.is_checked:
+            if c.is_checked and (not c.is_open or c.has_mine):
                 print("X",end='')
-            elif not c.is_open:
+            elif not c.is_open and not c.is_checked:
                 print(CSOM,end='')
+            elif c.is_open and c.is_checked and not c.has_mine:
+                print("#",end='')
+            elif c.is_open and not c.is_checked and c.has_mine:
+                print("*",end='')
             elif c.num_minas<0:
                 print("?",end='')
             elif c.num_minas==0:
@@ -172,27 +215,27 @@ class Cell:
     def set_num_minas(self,tablero):
         self.num_minas=0
         if self.y!=0:
-                if tablero[self.y-1][self.x].has_mine and not tablero[self.y-1][self.x].is_checked:
-                    self.num_minas+=1
+            if tablero[self.y-1][self.x].has_mine and not tablero[self.y-1][self.x].is_checked:
+                self.num_minas+=1
         
         if self.x!=0:
             if tablero[self.y][self.x-1].has_mine and not tablero[self.y][self.x-1].is_checked:
                 self.num_minas+=1
 
-        if self.x!=len(tablero)-1:
+        if self.x!=len(tablero[0])-1:
             if tablero[self.y][self.x+1].has_mine and not tablero[self.y][self.x+1].is_checked:
                 self.num_minas+=1
 
         if self.y!=len(tablero)-1:
-                if tablero[self.y+1][self.x].has_mine and not tablero[self.y+1][self.x].is_checked:
-                    self.num_minas+=1
+            if tablero[self.y+1][self.x].has_mine and not tablero[self.y+1][self.x].is_checked:
+                self.num_minas+=1
 
         if self.y%2==0:
-            if self.x!=len(tablero)-1 and self.y!=0:
+            if self.x!=len(tablero[0])-1 and self.y!=0:
                 if tablero[self.y-1][self.x+1].has_mine and not tablero[self.y-1][self.x+1].is_checked:
                     self.num_minas+=1
             
-            if self.y!=len(tablero)-1 and self.x!=len(tablero)-1:
+            if self.y!=len(tablero)-1 and self.x!=len(tablero[0])-1:
                 if tablero[self.y+1][self.x+1].has_mine and not tablero[self.y+1][self.x+1].is_checked:
                     self.num_minas+=1
         else:
@@ -207,42 +250,39 @@ class Cell:
     def open_cell(self,tablero):
         if self.is_checked:
             return 0
-
         if self.has_mine:
             return -1
-
         else:
             self.is_open=True
-            self.set_num_minas(tablero)
             if self.num_minas<=0:   #abrir recursivamente
-                if self.y!=0:
-                    if tablero[self.y-1][self.x].open_cell==-1:
+                if self.y!=0 and not tablero[self.y-1][self.x].is_open:
+                    if tablero[self.y-1][self.x].open_cell(tablero)==-1:
                         return -1
         
-                if self.x!=0:
-                    if tablero[self.y][self.x-1].open_cell==-1:
+                if self.x!=0 and not tablero[self.y][self.x-1].is_open:
+                    if tablero[self.y][self.x-1].open_cell(tablero)==-1:
                         return -1
 
-                if self.x!=len(tablero)-1:
-                    if tablero[self.y][self.x+1].open_cell==-1:
+                if self.x!=len(tablero[0])-1 and not tablero[self.y][self.x+1].is_open:
+                    if tablero[self.y][self.x+1].open_cell(tablero)==-1:
                         return -1
 
-                if self.y!=len(tablero)-1:
-                        if tablero[self.y+1][self.x].open_cell==-1:
+                if self.y!=len(tablero)-1 and not tablero[self.y+1][self.x].is_open:
+                        if tablero[self.y+1][self.x].open_cell(tablero)==-1:
                             return -1
                 if self.y%2==0:
-                    if self.x!=len(tablero)-1 and self.y!=0:
-                        if tablero[self.y-1][self.x+1].open_cell==-1:
+                    if self.x!=len(tablero[0])-1 and self.y!=0 and not tablero[self.y-1][self.x+1].is_open:
+                        if tablero[self.y-1][self.x+1].open_cell(tablero)==-1:
                             return -1
 
-                    if self.y!=len(tablero)-1 and self.x!=len(tablero)-1:
-                        if tablero[self.y+1][self.x+1].open_cell==-1:
+                    if self.y!=len(tablero)-1 and self.x!=len(tablero[0])-1 and not tablero[self.y+1][self.x+1].is_open:
+                        if tablero[self.y+1][self.x+1].open_cell(tablero)==-1:
                             return -1
                 else:
-                    if self.x!=0 and self.y!=0:
-                        if tablero[self.y-1][self.x-1].open_cell==-1:
+                    if self.x!=0 and self.y!=0 and not tablero[self.y-1][self.x-1].is_open:
+                        if tablero[self.y-1][self.x-1].open_cell(tablero)==-1:
                             return -1
 
-                    if self.y!=len(tablero)-1 and self.x!=0:
-                        if tablero[self.y+1][self.x-1].open_cell==-1:
+                    if self.y!=len(tablero)-1 and self.x!=0 and not tablero[self.y+1][self.x-1].is_open:
+                        if tablero[self.y+1][self.x-1].open_cell(tablero)==-1:
                             return -1
