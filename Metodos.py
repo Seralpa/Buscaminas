@@ -119,9 +119,11 @@ def jugar(tablero):
                             explosion=True
             if explosion:
                 if first_move:
-                    swapMine(tablero,pos[0],pos[1])
-                    tablero[pos[0]][pos[1]].open_cell(tablero)
                     explosion=False
+                    swapMine(tablero,pos[0],pos[1])
+                    if tablero[pos[0]][pos[1]].open_cell(tablero)==-1:
+                        #solo se da en el caso de que todas las celdas sean minas
+                        explosion=True
                 else:
                     break
             if comprobarTablero(tablero):
@@ -145,6 +147,7 @@ def swapMine(Tablero,i,j):
             if not c.has_mine:
                 c.has_mine=True
                 Tablero[i][j].has_mine=False
+                return None
 
 def setAllNumMinas(tablero):
     for row in tablero:
