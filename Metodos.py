@@ -120,6 +120,7 @@ def jugar(tablero):
                 break
             if comprobarTablero(tablero):
                 win=True
+                break
     openAll(tablero)
     mostrarTablero(tablero,total_minas,minas_marcadas,time.time()-start)
     if win:
