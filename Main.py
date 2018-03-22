@@ -3,7 +3,6 @@
 from __future__ import print_function
 from Metodos import *
 
-
 while True:
     eleccion=menuInicial()
     if(eleccion<4):
