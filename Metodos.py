@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 from __future__ import print_function
 from random import randint
 import time
@@ -71,6 +72,7 @@ def generarTablero(tamano,minas):
     return tablero
     
 def jugar(tablero):
+    first_move=True
     explosion,win=False,False
     total_minas=contarMinas(tablero)
     minas_marcadas=0
@@ -116,10 +118,17 @@ def jugar(tablero):
                         if tablero[pos[0]][pos[1]].open_cell(tablero)==-1:
                             explosion=True
             if explosion:
-                break
+                if first_move:
+                    swapMine(tablero,pos[0],pos[1])
+                    tablero[pos[0]][pos[1]].open_cell(tablero)
+                    explosion=False
+                else:
+                    break
             if comprobarTablero(tablero):
                 win=True
                 break
+            if accion=='*':
+                first_move=False
     openAll(tablero)
     mostrarTablero(tablero,total_minas,minas_marcadas,time.time()-start)
     if win:
@@ -128,6 +137,14 @@ def jugar(tablero):
     else:
         #TODO Mostrar mensaje de explosion
         pass
+
+def swapMine(Tablero,i,j):
+#Cambia una mina de una posicion i j a la primera casilla sin mina del tablero
+    for row in Tablero:
+        for c in row:
+            if not c.has_mine:
+                c.has_mine=True
+                Tablero[i][j].has_mine=False
 
 def setAllNumMinas(tablero):
     for row in tablero:
