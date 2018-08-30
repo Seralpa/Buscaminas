@@ -235,37 +235,53 @@ class Cell:
     def set_num_minas(self,tablero):
         self.num_minas=0
         if self.y!=0:
-            if tablero[self.y-1][self.x].has_mine and not tablero[self.y-1][self.x].is_checked:
+            if tablero[self.y-1][self.x].has_mine:
                 self.num_minas+=1
+            if tablero[self.y-1][self.x].is_checked:
+                self.num_minas-=1
         
         if self.x!=0:
-            if tablero[self.y][self.x-1].has_mine and not tablero[self.y][self.x-1].is_checked:
+            if tablero[self.y][self.x-1].has_mine:
                 self.num_minas+=1
+            if tablero[self.y][self.x-1].is_checked:
+                self.num_minas-=1
 
         if self.x!=len(tablero[0])-1:
-            if tablero[self.y][self.x+1].has_mine and not tablero[self.y][self.x+1].is_checked:
+            if tablero[self.y][self.x+1].has_mine:
                 self.num_minas+=1
+            if tablero[self.y][self.x+1].is_checked:
+                self.num_minas-=1
 
         if self.y!=len(tablero)-1:
-            if tablero[self.y+1][self.x].has_mine and not tablero[self.y+1][self.x].is_checked:
+            if tablero[self.y+1][self.x].has_mine:
                 self.num_minas+=1
+            if tablero[self.y+1][self.x].is_checked:
+                self.num_minas-=1
 
         if self.y%2==0:
             if self.x!=len(tablero[0])-1 and self.y!=0:
-                if tablero[self.y-1][self.x+1].has_mine and not tablero[self.y-1][self.x+1].is_checked:
+                if tablero[self.y-1][self.x+1].has_mine:
                     self.num_minas+=1
+                if tablero[self.y-1][self.x+1].is_checked:
+                    self.num_minas-=1
             
             if self.y!=len(tablero)-1 and self.x!=len(tablero[0])-1:
-                if tablero[self.y+1][self.x+1].has_mine and not tablero[self.y+1][self.x+1].is_checked:
+                if tablero[self.y+1][self.x+1].has_mine:
                     self.num_minas+=1
+                if tablero[self.y+1][self.x+1].is_checked:
+                    self.num_minas-=1
         else:
             if self.x!=0 and self.y!=0:
-                if tablero[self.y-1][self.x-1].has_mine and not tablero[self.y-1][self.x-1].is_checked:
+                if tablero[self.y-1][self.x-1].has_mine:
                     self.num_minas+=1
+                if tablero[self.y-1][self.x-1].is_checked:
+                    self.num_minas-=1
 
             if self.y!=len(tablero)-1 and self.x!=0:
-                if tablero[self.y+1][self.x-1].has_mine and not tablero[self.y+1][self.x-1].is_checked:
+                if tablero[self.y+1][self.x-1].has_mine:
                     self.num_minas+=1
+                if tablero[self.y+1][self.x-1].is_checked:
+                    self.num_minas-=1
     
     def open_cell(self,tablero):
         if self.is_checked:
